@@ -1163,3 +1163,124 @@ async function main() {
     }
 }
 main();
+..............................................................................................					Modules
+
+Javascript modularity:
+
+
+Modularity:
+..........
+
+In java Modularity , is presented via "Packages"
+
+Package organize the code  logically.
+
+Customer.java
+
+package com.ibm.cms
+
+public class Customer{}
+
+Java organizes code folders and files Physically.
+
+d:/javaapps/src/
+    com/ibm/cms/Customer.java
+
+
+What about javascript Modularity?
+
+ Javascript is file based modularity physically
+ but logically there is no such modularity at language level.
+
+ collection of variable declarations and function.
+
+Once js started growing in large scale, dev struck to organize code.
+
+2000, Smart developers started thinking about how to modualrize js code.
+ 
+
+Module design patterns came.
+
+1.Namespace design pattern : 2000 : jquery
+2.AMD -Async Module Defintion : dojo
+---------------------------------------------------------
+3.CJS - Common JS =  namespace + amd
+4.ES 6 Module design pattern  = amd + cjs
+------------------------------------------------------------
+5.System = AMD = CJS + ES 6
+6.UMD = NAMESPACE + AMD + CJS = ES 6
+...........................................................................................
+
+
+
+export const firstName = "Subramanian";
+export const lastName = "Murugan";
+export const age = 18
+export const status = true;
+export const address = {
+    city:'coimbatore'
+}
+export const skills = ["java","react"]
+export const sayGreet = function(){
+    return 'Hello';
+}
+import { firstName, lastName, age, status, address,sayGreet, skills } from './mylib'
+
+console.log(firstName, lastName, age, status, address,sayGreet(),skills);
+// console.log(obj)
+...........................................................................................
+export default : 
+ only one you can ,
+
+// import BankService from "./services/bank.service";
+// import TransferService from "./services/transfer.service";
+//barrel export
+//we have reduced more import statements, no need of file names
+import { TransferService,BankService } from "./services";
+
+import { domain, version, port } from "./constants/app.constant";
+
+const bService = new BankService();
+const transferService = new TransferService()
+
+console.log(bService.deposit(), bService.getBalance(), domain, version, port)
+console.log(transferService.transfer(100))
+
+...
+
+
+// export default class BankService {
+
+//     getBalance() {
+//         return 100;
+//     }
+//     deposit() {
+//         return 10
+//     }
+// }
+class BankService {
+
+    getBalance() {
+        return 100;
+    }
+    deposit() {
+        return 10
+    }
+}
+export default BankService;
+class TransferService {
+
+    transfer(amount) {
+        return amount;
+    }
+    
+}
+export default TransferService;
+
+services/index.js
+import BankService from './bank.service';
+import TransferService from './transfer.service'
+
+//re export : barrel 
+export { BankService, TransferService };
+
