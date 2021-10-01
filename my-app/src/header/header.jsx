@@ -2,6 +2,8 @@ import React from 'react';
 
 
 
-const Header = () => <h1>Header</h1>;
+const Header = () => <div className="App-header">
+    <h1>React</h1>
+</div>
 
 export { Header };

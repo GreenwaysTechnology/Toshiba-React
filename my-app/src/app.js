@@ -7,7 +7,7 @@ import { Footer } from './footer';
 import { Body } from './body';
 
 
-const App = () => <div>
+const App = () => <div className="container">
     <Header />
     <MenuBar/>
     <Body />
