@@ -1,31 +1,36 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import ReactDOM from 'react-dom';
 import 'bootstrap/dist/css/bootstrap.css'
-import { PHOTOS } from './mock-data/photos';
-
-const PhotoGalary = props => {
-
-    return <div>
-        {
-            props.photos.map((photo, index) => {
-                return <div className="row align-items-start" key={index}>
-                    <div className="col">
-                        <h3>{photo.title}</h3>
-                        <img src={photo.thumbnailUrl} />
-                    </div>
-                </div>
-            })
-        }
-    </div>
 
 
+const DescriptionList = props => {
+    return <dl>
+        {props.items.map((item, index) => {
+            return <Fragment key={index}>
+                <dt>
+                    {item.term}
+                </dt>
+                <dd>
+                    {item.description}
+                </dd>
+            </Fragment>
+        })}
+    </dl>
 }
 
-const App = () => {
-    return <div className="container">
-        <h1>Photo Galary</h1>
-        <PhotoGalary photos={PHOTOS} />
-    </div>
-};
+const items = [{
+    term: 'coffee',
+    description: 'Cold Coffee'
+},
+{
+    term: 'Milk',
+    description: 'Milk has lot of protins'
+},
+]
 
-ReactDOM.render(<App />, document.getElementById('root'))
+export const App = () => {
+    return <div className="container">
+        <DescriptionList items={items} />
+    </div>
+}
+ReactDOM.render(<App />, document.getElementById('root'));
