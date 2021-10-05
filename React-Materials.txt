@@ -1698,6 +1698,436 @@ export const App = () => {
     </div>
 }
 ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................
+				State-Dynamic UI - Event Handling
+.............................................................................................
+
+
+state :
+
+state is another way of representing data inside component.
+
+Points:
+
+1.with respect to props, component never modifies data / component never mutates the data.
+  -Based on fp principle called "pure function".
+
+2.what if i want to change data /mutate data?
+ props never help us, then we need to look at new pattern , that is called state.
+
+state helps to modifiy data/ mutate data.
+
+Component can change the data.
+
+How Component can change the data?
+
+-Via State
+
+How state can be changed
+
+-Via Events
+
+When ever the component change the data via events, component need to repaint, React uses an alogorthim "Diff algorthim" - virtual dom.
+
+State changes should be done in pure function.
+
+.we have 2nd rule ,now we will discuss now.
+
+
+//pure function demo:
+
+//pure or not : This is impure function
+// function updateProfile(profile, city) {
+//     profile.city = city;
+//     return profile;
+// }
+
+// //pure function: return new Object every time , with new state 
+
+// function updateProfile(profile, city) {
+//     //return new Object
+//     return {
+//         id: profile.id,
+//         name: profile.name,
+//         city: city
+//     };
+// }
+
+//pure function : short cut apis
+//pure function: return new Object every time , with new state 
+
+// function updateProfile(profile, city) {
+//     //return new Object
+//   return Object.assign({}, profile, { city: city,key: { key1:someprop} })
+// }
+
+//pure function : using spread operator
+
+function updateProfile(profile, city) {
+    //return new Object
+    return { ...profile, city };
+}
+
+//is it pure : Impure; because push method is not pure
+// function add(todos, todo) {
+//     return todos.push(todo)
+// }
+// function add(todos, todo) {
+//     return todos.concat(todo)
+// }
+//using spread operator :pure function
+function add(todos, todo) {
+    return [...todos, todo];
+}
+
+
+//why we are using map in the react 
+//props.users.map()  ----> map is pure function.
+
+//initial state  / original state/ base State
+let profile = {
+    id: 1,
+    name: 'Subramanian',
+    city: 'Chennai'
+}
+
+Object.freeze(profile);
+
+console.log(updateProfile(profile, 'Coimbatore'));
+
+console.log(updateProfile(profile, 'Banaglore'));
+
+console.log(updateProfile(profile, 'Delhi'));
+
+let todos = [{
+    title: 'Learn react',
+    done: true
+}];
+
+Object.freeze(todos);
+console.log(add(todos, { title: 'Learn Microservices', done: false }));
+............................................................................................
+			Components and pure functions
+............................................................................................
+
+How to introduce state? -  for immutable data representation
+
+- inside class component
+- inside function component not possible but possible through "React 16 hooks".
+
+............................................................................................
+import React from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+
+//state inside class Component
+
+class Counter extends React.Component {
+
+    state = {
+        counter: 0
+    };
+
+    //listener
+    onIncrement = () => {
+        this.state.counter = this.state.counter + 1;
+        console.log('inside listener')
+        console.log(this.state)
+
+    }
+
+    render() {
+        console.log(this.state)
+        return <div className="container">
+            <h1>Counter App-Using State and Event Handling</h1>
+            <h2>Counter : {this.state.counter}</h2>
+            <button onClick={this.onIncrement} className="btn btn-success">+</button>
+        </div>
+    }
+}
+
+const App = () => <Counter />
+
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................
+
+
+After running this code, you can see that button, on clicking button, listerner is called but you dont see any changes in the ui. , counter value is not updated any more.
+
+
+We need to call render method, because render method is having ui logic.
+
+can we call render method like below?
+
+   //listener
+    onIncrement = () => {
+        this.state.counter = this.state.counter + 1;
+        // console.log('inside listener')
+        // console.log(this.state)
+        //render call
+        this.render();
+    }
+
+yes, but still ui update will not happen?
+
+Note : we should not call render method directly.
+.................
+
+Render cycle: Virutal DOM -  Diff algorthim.
+
+What is role of render method inside component.
+
+ "render method prepares Virtual DOM" When ever it is called.
+
+V.DOM: 
+ 
+   The tree representation of DOM structure.
+
+Flow of React Render Cycle(page Update cycle)
+.............................................................................................
+              init cycle                         update cycle
+ 
+               
+
+init cycle:
+
+First Time:
+
+ When component is created and rendered <Component/>
+
+render is called -- prepares intial tree(vdom)----->gives to ReactDOM.render()----Will create new DOM - and insert into browser
+
+
+Second Time/after ui interaction starts
+				User
+				 |
+			     clicks button (any ui event)
+				|
+			     listener is called
+				|
+			     setState() method    
+				|
+			     render() is called
+			        |
+			    returns new VDOM
+				|
+			 Enter into Reconcilation Phase
+				|
+             diff alogrithm is applied to find right dom nodes to be updated
+	
+                    compare newVDOM === existing snapshot of dom
+				  |
+                           finally flush the changes
+
+
+
+setState::
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+
+//state inside class Component
+
+class Counter extends React.Component {
+
+    state = {
+        counter: 0
+    };
+
+    //listener
+    onIncrement = () => {
+        // this.state.counter = this.state.counter + 1;
+        // console.log('inside listener')
+        // console.log(this.state)
+        //render call :dont do this
+        //this.render();
+        // this.setState(function (state) {
+        //     //return new state object
+        //     console.log('new state=>', state);
+        //     return {
+        //         counter: state.counter + 1
+        //     };
+        // })
+        // this.setState(prvState => {
+        //     return Object.assign({}, prvState, { counter: prvState.counter + 1 })
+        // })
+        // this.setState(prvState => {
+        //     let counter = prvState.counter + 1;
+        //     return { ...prvState, counter };
+        // })
+        let counter = this.state.counter + 1;
+        this.setState({ counter });
+    }
+
+    render() {
+        console.log('inside render method')
+        console.log('old/Previous state =>', this.state);
+        return <div className="container">
+            <h1>Counter App-Using State and Event Handling</h1>
+            <h2>Counter : {this.state.counter}</h2>
+            <button onClick={this.onIncrement} className="btn btn-success">+</button>
+        </div>
+    }
+}
+
+const App = () => <Counter />
+
+ReactDOM.render(<App />, document.getElementById('root')
+..............................................................................................					Event Listners Deep dive
+..............................................................................................
+
+SyntheticEvent:
+
+ _ it is Event object provided by react to refer dom elements inside react components.
+
+Event Object provides lot of apis
+
+api:
+
+boolean bubbles
+boolean cancelable
+DOMEventTarget currentTarget
+boolean defaultPrevented
+number eventPhase
+boolean isTrusted
+DOMEvent nativeEvent
+void preventDefault()
+boolean isDefaultPrevented()
+void stopPropagation()
+boolean isPropagationStopped()
+void persist()
+DOMEventTarget target
+number timeStamp
+string type
+
+target : To refer the DOM object
+
+//setState + Event Listener
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+class Todo extends Component {
+
+    //state
+    state = {
+        items: [],
+        text: ''
+    }
+    //getting todo item
+    //e is variable holding SyntheticEvent object reference
+    onHandleChange = e => {
+        //Getting Text Box reference
+        let inputBox = e.target;
+        this.setState({ text: inputBox.value })
+    }
+    handleSubmit = e => {
+        //to stop auto form submission
+        e.preventDefault();
+        //form validation
+        if (this.state.text.length === 0) {
+            return;
+        }
+        const newItem = {
+            text: this.state.text,
+            id: Date.now()
+        };
+        //update the items array
+        this.setState(state => {
+            return {
+                items: state.items.concat(newItem),
+                text: ''
+            }
+        })
+    }
+
+
+    render() {
+        return <div className="container">
+            <h1>Todo App</h1>
+            <hr />
+            <h2>Todos</h2>
+            <ul>
+                {this.state.items.map((todo, index) => {
+                    return <li key={index}>{todo.text}</li>
+                })}
+            </ul>
+            <form onSubmit={this.handleSubmit}>
+                <label htmlFor="new-todo">What needs to be done?</label>
+                <br />
+                <input onChange={this.onHandleChange} value={this.state.text} />
+                <button className="btn btn-success">Add #{this.state.items.length + 1}</button>
+            </form>
+        </div>
+    }
+}
+
+const App = () => <Todo />
+
+ReactDOM.render(<App />, document.getElementById('root'))
+..............................................................................................
+			Dynamic Props === State + Props => state as Prop 
+                        function as Prop : listener function can be passed as a prop to child 					  component
+..............................................................................................
+
+Container Components
+Presentational Components
+
+
+Component with State contains
+
+-state declration
+-state changes- biz logic - listeners
+-UI  
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+class Counter extends React.Component {
+
+    state = {
+        counter: 10
+    };
+
+    //listener
+    onIncrement = () => {
+        let counter = this.state.counter + 1;
+        this.setState({ counter });
+    }
+
+    render() {
+        return <div className="container">
+        <CounterUI counter={this.state.counter} onIncrement={this.onIncrement}  />
+        </div>
+    }
+}
+
+//presentational component
+const CounterUI = props => {
+    return <>
+        <h1>Counter App-Using State and Event Handling</h1>
+        <h2>Counter : {props.counter}</h2>
+        <button onClick={props.onIncrement} className="btn btn-success">+</button>
+    </>
+}
+
+
+
+const App = () => <Counter />
+
+ReactDOM.render(<App />, document.getElementById('root'));
+
+
+
+
+
+
+
+
 
 
 
