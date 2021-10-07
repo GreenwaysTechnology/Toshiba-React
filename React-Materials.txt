@@ -2121,30 +2121,595 @@ const App = () => <Counter />
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
+..............................................................................................
+				 Life cycle methods
+
+
+Component Life Cycles
+
+Can be classified into 3 phases
+
+1.mount
+   First renders- initali ui
+-constructor
+    for initalization of state- not needed in modern react.
+-render
+   inital vdom prepartion
+-componentDidMount
+  once dom is created, this method will be called
+-inital ajax calls
+-timer calls
+-websocket calls
+
+2.update
+   when user interacts
+3.unmount
+   when component is removed.
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+
+class Counter extends React.Component {
+    state = {}
+    //life cycle methods
+    constructor() {
+        super();
+        console.log('Counter- constructor is called')
+     
+    }
+    render() {
+        console.log('Counter- render is called')
+        return <div>
+            <h1>Counter</h1>
+        </div>
+    }
+    componentDidMount(){
+        console.log('Counter- componentDidMount is called')
+        //
+
+    }
+}
+const App = () => <Counter />
+
+ReactDOM.render(<App />, document.getElementById('root'));
+...............................................................................................
+
+
+Ajax calls:
+
+
+ajax apis:
+React has no separate ajax apis.
+
+react says you can use any third party ajax libs
+
+1.fetch
+2.axios
+3.jquery ajax
+
+apis: fake api
+jsonplaceholder
+
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+
+class Todo extends Component {
+
+    state = {
+        error: null,
+        isLoaded: false,
+        todos: []
+    }
+    render() {
+        const { error, isLoaded, todos } = this.state;
+        console.log('render', error);
+        //Conditional Rendering
+        if (error) {
+            console.log('inside error block')
+            return <div>Error</div>;
+        } else if (!isLoaded) {
+            return <h1>Loading...</h1>;
+        } else {
+            return (
+                <div className="container">
+                    <h1>TODO App</h1>
+                    <hr />
+                    <ul className="list-group">
+                        {todos.map((todo, index) => (
+                            <li key={index}>
+                                <span className="badge badge-pill badge-primary">
+                                    {todo.id}
+                                </span>
+                                <span>
+                                    {todo.title}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        }
+
+
+
+    }
+    componentDidMount() {
+        const todourl = 'https://jsonplaceholder.typicode.com/todos';
+        fetch(todourl)
+            .then(response => response.json())
+            .then(todos => {
+                this.setState(previousState => {
+                    return { ...previousState, todos: previousState.todos.concat(todos), isLoaded: true };
+                });
+            }).catch(error => {
+                console.log(error)
+                this.setState({
+                    isLoaded: true,
+                    error
+                });
+            })
+    }
+
+}
+const App = () => <Todo />
+
+ReactDOM.render(<App />, document.getElementById('root'));
+
+..............................................................................................
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+//parent components
+
+class Counter extends React.Component {
+
+    state = {
+        counter: 10
+    };
+    constructor() {
+        super();
+        console.log('counter constructor is called')
+    }
+    //listener
+    onIncrement = () => {
+        let counter = this.state.counter + 1;
+        this.setState({ counter });
+    }
+    componentDidMount() {
+        console.log('counter componentDidMount is called')
+
+    }
+    componentDidUpdate(){
+        console.log('counter componentDidUpdate is called')
+
+    }
+
+    render() {
+        console.log('counter render is called')
+
+        return <div className="container">
+            <CounterUI counter={this.state.counter} onIncrement={this.onIncrement} />
+        </div>
+    }
+}
+
+//presentational component
+class CounterUI extends React.Component {
+    constructor() {
+        super();
+        console.log('CounterUI constructor is called')
+    }
+    componentDidMount() {
+        console.log('CounterUI componentDidMount is called')
+
+    }
+    componentDidUpdate(){
+        console.log('CounterUI componentDidUpdate is called')
+
+    }
+    render() {
+
+        console.log('CounterUI render is called')
+
+        return <>
+            <h1>Counter App-Using  Life Cycle methods</h1>
+            <h2>Counter : {this.props.counter}</h2>
+            <button onClick={this.props.onIncrement} className="btn btn-success">+</button>
+        </>
+    }
+}
 
 
 
 
+const App = () => <Counter />
+
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................				         HOOKS
+.............................................................................................
+
+What is hook?
+ It is a new feature introduced in react 16.
+ Simple abstraction for class compoents-  how to remove classes from react.
+
+Intention is functional component for every things.
+
+objective of hooks:
+
+1.to eleminate class components as much possible.
+
+2.Resuable application behaviours
+  eg:ajax calls
+
+
+1.if i am going to remove class means, how can i handle state inside function components.
+  useState hook
+
+"use"+functionName ==>hook Syntax
+"useState"
+"useContext"
+"useEffect"
+"useAjax"
+"useWebSocket"
+etc....
+
+.............................................................................................	
+				How to use state and setState inside function
+........................................................................................
+import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+const Counter = props => {
+    //state declartion
+    const [count, setCount] = useState(10);
+    const [like, setLike] = useState(100);
+
+    //listener
+    const onIncrement = () => {
+        setCount(count + 1);
+    };
+    return <div className="container">
+        <h1>Counter App Using Hooks</h1>
+        <h1>Counter : {count} Like {like}</h1>
+
+        <button onClick={onIncrement}>+</button>
+        <button onClick={() => {
+            setCount(count - 1)
+        }}>-</button>
+        <hr />
+        <div>
+            <button onClick={() => setLike(like + 1)}>like</button>
+        </div>
+
+    </div>
+}
+
+
+const App = () => <Counter />
+
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................					useState and State Updates
+..............................................................................................
+import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+const Counter = props => {
+    //state declartion
+    const [count, setCount] = useState(10);
+    const [like, setLike] = useState(100);
+
+    //listener
+    const onIncrement = () => {
+        //  setCount(count + 1);
+        setCount(prevState => {
+            console.log(prevState);
+            return prevState + 1
+        })
+    };
+    return <div className="container">
+        <h1>Counter App Using Hooks</h1>
+        <h1>Counter : {count} Like {like}</h1>
+
+        <button onClick={onIncrement}>+</button>
+        <button onClick={() => {
+            setCount(count - 1)
+        }}>-</button>
+        <hr />
+        <div>
+            <button onClick={() => setLike(like + 1)}>like</button>
+        </div>
+
+    </div>
+}
+
+
+const App = () => <Counter />
+
+ReactDOM.render(<App />, document.getElementById('root'));
+...........................................................................................	
+				literal Object and useState
+
+
+import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+const Feeback = props => {
+    const initalState = { like: 10 }
+    const [feeback, setFeedback] = useState(initalState);
+
+    const giveFeedback = () => {
+        // setFeedback(prevState => {
+        //     console.log(prevState);
+        //     return {
+        //         like: prevState.like + 1
+        //     }
+        // })
+        let like = feeback.like + 1;
+        setFeedback({ ...feeback, like })
+    }
+
+    return <div>
+        <h1>Feeback {feeback.like}</h1>
+        <button onClick={giveFeedback}>+</button>
+    </div>
+}
+
+const App = () => <Feeback />
+
+ReactDOM.render(<App />, document.getElementById('root'));
+............................................................................................
+			Task For you : convert the below code using useStateHook.
+.............................................................................................
+
+//setState + Event Listener
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+class Todo extends Component {
+
+    //state
+    state = {
+        items: [],
+        text: ''
+    }
+    //getting todo item
+    //e is variable holding SyntheticEvent object reference
+    onHandleChange = e => {
+        //Getting Text Box reference
+        let inputBox = e.target;
+        this.setState({ text: inputBox.value })
+    }
+    handleSubmit = e => {
+        //to stop auto form submission
+        e.preventDefault();
+        //form validation
+        if (this.state.text.length === 0) {
+            return;
+        }
+        const newItem = {
+            text: this.state.text,
+            id: Date.now()
+        };
+        //update the items array
+        this.setState(state => {
+            return {
+                items: state.items.concat(newItem),
+                text: ''
+            }
+        })
+    }
+
+
+    render() {
+        return <div className="container">
+            <h1>Todo App</h1>
+            <hr />
+            <h2>Todos</h2>
+            <ul>
+                {this.state.items.map((todo, index) => {
+                    return <li key={index}>{todo.text}</li>
+                })}
+            </ul>
+            <form onSubmit={this.handleSubmit}>
+                <label htmlFor="new-todo">What needs to be done?</label>
+                <br />
+                <input onChange={this.onHandleChange} value={this.state.text} />
+                <button className="btn btn-success">Add #{this.state.items.length + 1}</button>
+            </form>
+        </div>
+    }
+}
+
+const App = () => <Todo />
+
+ReactDOM.render(<App />, document.getElementById('root'))
+..............................................................................................
+			ComponentDidMount and ComponentDidUpdate
+		              How to Replace using Hooks
+				  useEffect
+
+
+Side Effects , DOM Manipulation,ResourceManagement:
+...................................................
+
+What is Side effects?
+
+Changining DOM elements after vdom is mounted into real dom - componentDidMount.
+import React, { Component, useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+//using side effects
+//Side effects using old react style
+// class Customer extends Component {
+
+
+//     state = {
+//           screen: 'Customer Manager App'
+//     }
+//     add = () => {
+//           this.setState({ screen: 'Customer Manager App - Add ' })
+//     }
+//     render() {
+//           return <div>
+//                 <h1>Customer Manager App: using Side effects</h1>
+//                 <button onClick={this.add} >Add</button>
+//           </div>
+//     }
+//     //side effeects with inital / mount cycle
+//     componentDidMount() {
+//           //imperative dom
+//           document.title = this.state.screen;
+//     }
+//     //side effects with update cycle
+//     componentDidUpdate() {
+//           document.title = this.state.screen;
+//     }
+// }
+
+const Customer = props => {
+    const [screen, setScreen] = useState('Customer Manager App');
+    //componentDidMount && componentDidUpdate
+    useEffect(() => {
+        console.log('useEffect is called ', screen)
+        document.title = screen;
+    })
+
+    //listener function to change the state
+    const changeTitle = () => {
+        setScreen("Customer Manager App - Add")
+    }
+
+    return <div>
+        <h1>Customer Manager App: using Side effects</h1>
+        <button onClick={changeTitle} >ChangeTitle</button>
+    </div>
+}
 
 
 
+const App = () => <Customer />
+
+ReactDOM.render(<App />, document.getElementById('root'))
+
+..............................................................................................
+			useEffect- with component willUnMount use case
+..............................................................................................
+
+import React, { Component, useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/dist/css/bootstrap.css'
+
+//using side effects
+//Side effects using old react style
+// class Customer extends Component {
+
+
+//     state = {
+//           screen: 'Customer Manager App'
+//     }
+//     add = () => {
+//           this.setState({ screen: 'Customer Manager App - Add ' })
+//     }
+//     render() {
+//           return <div>
+//                 <h1>Customer Manager App: using Side effects</h1>
+//                 <button onClick={this.add} >Add</button>
+//           </div>
+//     }
+//     //side effeects with inital / mount cycle
+//     componentDidMount() {
+//           //imperative dom
+//           document.title = this.state.screen;
+//     }
+//     //side effects with update cycle
+//     componentDidUpdate() {
+//           document.title = this.state.screen;
+//     }
+//componentWillUnMount(){
+//resourceclean up activit
+//}
+// }
+
+const Customer = props => {
+    const [screen, setScreen] = useState('Customer Manager App');
+    //componentDidMount && componentDidUpdate
+    useEffect(() => {
+        console.log('useEffect is called ', screen)
+        document.title = screen;
+
+        //componentWillUnMount- clean upcode
+        return () => {
+            //clean upcode 
+            console.log('component is destroyed')
+        };
+    })
+    //listener function to change the state
+    const changeTitle = () => {
+        setScreen("Customer Manager App - Add")
+    }
+
+    return <div>
+        <h1>Customer Manager App: using Side effects</h1>
+        <button onClick={changeTitle} >ChangeTitle</button>
+    </div>
+}
 
 
 
+const App = () => <Customer />
 
+ReactDOM.render(<App />, document.getElementById('root'))
+..............................................................................................
+				componentDidUpdate with Parameters
+..............................................................................................
+componentDidUpdate(prevProps, prevState, snapshot)
+	
 
+componentDidUpdate(prevProps) {
+  // Typical usage (don't forget to compare props):
+  if (this.props.userID !== prevProps.userID) {
+    this.fetchData(this.props.userID);
+  }
+}
 
+The above code how to implement in useEffect Hook.
 
+componentDidUpdate(prveState) {
+  // Typical usage (don't forget to compare props):
+  if (prveState.count !== this.state.count) {
+    this.fetchData(this.props.userID);
+  }
+}
 
+ useEffect(() => 
+    //trigger re render the effect if the count changes
+   document.title = 'Something'
+ },[count])
+.............................................................................................
 
+Built in Hooks from React itself:
+-useState
+-useEffect
+-useContext
 
+-useReducer
+-useCallback
+-useMemo
+-useRef
+-useLayoutEffect
+etc....
 
-
-
-
-
-
-
-			
-
+We can build our own hooks -custom Hooks
+..............................................................................................
 
