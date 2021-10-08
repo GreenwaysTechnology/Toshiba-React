@@ -807,7 +807,7 @@ Basic XML  rules:
  <p>Path finder</p>
 
 In html what can be root element
- <div>,<span>,all html 5 layout eleements header,footer,section,aside...
+ <div>,<span>,all html 5 layout elements header,footer,section,aside...
 
 
 
@@ -2712,4 +2712,329 @@ etc....
 
 We can build our own hooks -custom Hooks
 ..............................................................................................
+				Custom Hooks
+.............................................................................................
+//Custom Hooks
+import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+
+const Customer = props => {
+    //Application state
+    const [screen, setScreen] = useState('Customer Manager App')
+    const [width, setWidth] = useState(window.innerWidth);
+
+    //title update
+    useEffect(() => {
+        document.title = screen;
+    });
+    useEffect(() => {
+        const handleResize = () => setWidth(window.innerWidth)
+        //add window resize listener
+        window.addEventListener('resize', handleResize)
+        //clean up code
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        }
+    });
+
+    return <div>
+        <h1>Custom Hooks</h1>
+        <h2>Current Window width {width}</h2>
+        <button onClick={() => {
+            setScreen('CustomerManager App-Update')
+        }}>Update Title</button>
+    </div>
+
+}
+
+const App = () => {
+    return <div>
+        <Customer />
+    </div>
+}
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................
+
+In the above code , we have so many hooks which makes your application less maintainable, testable , code duplication.
+For eg, i want window resize behaviour in another component.
+
+Custom hooks, you can create windowresize as custom Hook.
+
+How to write custom hooks?
+
+Custom hooks are plain javascript function.
+function will start with "use+HookName" , but name can be any thing but it is recommended.
+
+import { useState, useEffect } from "react";
+
+const useWindowWidth = () => {
+    const [width, setWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => setWidth(window.innerWidth)
+        //add window resize listener
+        window.addEventListener('resize', handleResize)
+        //clean up code
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        }
+    })
+    return width;
+}
+export { useWindowWidth };
+......................................
+import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+import { useWindowWidth } from './windowhooks/useWindowHook';
+
+const Customer = props => {
+    //Application state
+    const [screen, setScreen] = useState('Customer Manager App')
+    const width = useWindowWidth();
+    //title update
+    useEffect(() => {
+        document.title = screen;
+    });
+    return <div>
+        <h1>Custom Hooks</h1>
+        <h2>Current Window width {width}</h2>
+        <button onClick={() => {
+            setScreen('CustomerManager App-Update')
+        }}>Update Title</button>
+    </div>
+
+}
+
+const App = () => {
+    return <div>
+        <Customer />
+    </div>
+}
+ReactDOM.render(<App />, document.getElementById('root'));
+............................................................................................
+			Controlled and UnControlled Components- Refs and DOM
+..........................................................................................
+
+How to access DOM elements into component?
+
+Ways
+
+1.Controlled way: via event object
+  Dom object can be accessed via event listener
+ evt.target.value
+
+if any component is accessing dom element via event object, those components are controlled components.
+
+2.UnControlled way : via refs 
+
+  DOM objects can be accessed without event object using ref pattern -  reference pattern.
+In which components cant controll accessing dom elements.
+
+
+
+Refs:
+  It is way to access DOM nodes or React elements created in the render  meethod.
+
+When to use refs?
+ Where you cant access the property of dom using event.target .
+
+-Managing focus,text selection,media playback methods
+-triggering imperative animations
+-intrating with thrid party DOM libs.
+
+import React, { createRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+
+
+const Text = props => {
+    const myref = createRef();
+
+    useEffect(() => {
+        console.dir(myref.current);
+        console.log(myref.current.innerHTML)
+    })
+    return <div ref={myref}>
+        <h1>Heading</h1>
+    </div>
+}
+
+const App = () => {
+    return <div>
+        <Text />
+    </div>
+}
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................
+import React, { useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
+
+
+const Text = props => {
+    const myref = useRef(null);
+
+    useEffect(() => {
+        myref.current.focus();
+    })
+    const onRead = event => {
+        alert(myref.current.value);
+    }
+    return <div>
+        <input type="text" ref={myref} value="Hello" />
+        <button onClick={onRead}>ReadValue</button>
+    </div>
+}
+
+const App = () => {
+    return <div>
+        <Text />
+    </div>
+}
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................
+				 Global Data:Context
+..............................................................................................
+
+Context provides a way to pass data through the component tree without having to pass props down manually at every level.
+
+if you want to share data global across the application, we can pass data at root component using context.
+
+Context has been designed to share data that can be considered "global" for a tree of compoents.
+
+When to use context?
+
+-if you want to share common ui themes,login information,language settings.
+
+
+Use case : how to pass data in nested tree:  before context
+
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+
+const Toolbar = props => {
+    return <ThemedButton theme={props.theme} />
+}
+const ThemedButton = props => {
+    return <Button theme={props.theme} />
+}
+const Button = props => {
+    return <button style={props.theme}>MyButton</button>
+}
+
+const theme = {
+    "backgroundColor": "red",
+    "color": "white"
+}
+const App = props => {
+    return <Toolbar theme={theme} />
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+............................................................................................
+
+How to solve the above problem using context.
+
+How to create Context Object?
+
+const context = React.createContext('nameofcontext')
+
+Context provides two nested object
+
+-Provider
+  context.Provider
+ where we can share the data via provider props
+
+<context.Provider value={/*value you want share to component tree*/}
+
+-Consumer
+  The React component that subscribes to context updates: Listener , where you can read context values
+
+<context.consumer>
+   {value=>/*render based on some value*/}
+</context.consumer>
+.............................................................................................
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+//create Context Object
+export const ThemeContext = React.createContext('themecontext');
+const theme = {
+    "backgroundColor": "red",
+    "color": "white"
+}
+
+const Toolbar = props => {
+    return <ThemedButton />
+}
+const ThemedButton = props => {
+    return <Button />
+}
+const Button = props => {
+
+    return <ThemeContext.Consumer>
+        {theme => {
+            return <button style={theme}>MyButton</button>
+        }}
+    </ThemeContext.Consumer>
+
+}
+
+
+const App = props => {
+    return <ThemeContext.Provider value={theme}>
+        <Toolbar />
+    </ThemeContext.Provider>
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+.............................................................................................
+				Memomization
+.............................................................................................
+
+It is optimization technique used to primarily to avoid function calls again and again -  Caching.
+
+
+import React, { useMemo, useState } from 'react';
+import ReactDOM from 'react-dom';
+
+
+const Factorial = props => {
+
+    const [num, setNum] = useState(1)
+    const [count, setCount] = useState(0);
+
+    const factorialOf = n => {
+        console.log('Factorial of n is called',n);
+        return n <= 0 ? 1 : n * factorialOf(n - 1);
+    }
+    const factorial = useMemo(() => factorialOf(num), [num]);
+
+    const onChange = evt => {
+        setNum(Number(evt.target.value))
+    }
+    const onClick = evt => {
+        alert('rerendering')
+        setCount(i => i + 1);
+    }
+
+    return <div>
+        <input type="number" value={num} onChange={onChange} />
+        <h3>{factorial}</h3>
+        <button onClick={onClick}>Re render</button>
+    </div>
+}
+const App = props => {
+    return <Factorial />
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................
+
+
+
+
+
+
+
 
