@@ -1,59 +1,76 @@
 import produce from "immer";
+import { createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { connect, Provider } from 'react-redux'
 
-function updateProfile(profile, city) {
-    // return { ...profile, city: city }
-    return produce(profile, draft => {
-        //mutable version of immutable
-        draft.city = city;
-    })
+//reducer
+const initalState = {
+    value: 10
 }
-
-//inital state
-const profile = {
-    id: 1,
-    name: 'Subramanian',
-    city: 'chenai'
-};
-console.log(profile)
-const updatedProfile = updateProfile(profile, 'Coimbatore');
-
-console.log(updatedProfile)
-
-console.log('Same object(profile===updatedProfile)', profile === updatedProfile)
-/////////////////////////////////////////////////.................
-
-
-function updateCustomer(customer, mobileno) {
-
-    // return {
-    //     ...customer,
-    //     contact: {
-    //         ...customer.contact,
-    //         communication: {
-    //             ...customer.contact.communication,
-    //             mobileno: mobileno
-    //         }
-    //     }
-    // }
-    return produce(customer, draft => {
-        draft.contact.communication.mobileno = mobileno
-    });
-
-}
-
-let customer = {
-    id: 1,
-    name: 'Subramanian',
-    contact: {
-        address: {
-            city: 'Coimbatore'
-        },
-        communication: {
-            mobileno: '9000000000'
-        }
+const counterReducer = (state = initalState, action) => {
+    //logic
+    switch (action.type) {
+        case 'counter/increment':
+            console.log("Old state", state, "action", action)
+            // return { ...state, value: state.value + 1 };
+            return produce(state, draft => {
+                draft.value++;
+            });
+        case 'counter/incrementByAmount':
+            console.log("Old state", state, "action", action)
+            //return { ...state, value: state.value + action.payload };
+            return produce(state, draft => {
+                draft.value += action.payload;
+            });
+        default:
+            return state;
     }
 }
-console.log(customer);
-const updatedCustomer = updateCustomer(customer, '9003706368')
-console.log(updatedCustomer)
-console.log("Same Object (state===newState) ? =>", customer === updatedCustomer);
+const store = createStore(counterReducer);
+/////////////////////////////////////////////////////////////////////////////////////
+//mapper function/selector
+//state->app state
+function mapStateToProps(state) {
+    return {
+        myvalue: state.value
+        //react prop:reduxstate
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////
+
+//action creator
+const increment = () => ({
+    type: 'counter/increment',
+    payload: undefined
+});
+
+//container component
+
+const Counter = props => {
+    //console.log(props)
+    const { dispatch } = props;
+    const onIncrement = evt => {
+        //  props.dispatch(increment())
+        dispatch(increment());
+    }
+    return <CounterDashBoard {...props} onIncrement={onIncrement} />
+};
+//presentational components
+const CounterDashBoard = ({ myvalue, onIncrement }) => <>
+    <h1>Value: {myvalue}</h1>
+    <button onClick={onIncrement}>increment</button>
+</>
+
+
+//merge the View + Redux
+const CounterHOC = connect(mapStateToProps)(Counter)
+
+const App = () => <div>
+    <h1>React - Redux Integration</h1>
+    <Provider store={store}>
+        <CounterHOC />
+    </Provider>
+</div>
+
+ReactDOM.render(<App />, document.getElementById('root'));

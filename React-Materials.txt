@@ -3785,6 +3785,721 @@ console.log(customer);
 const updatedCustomer = updateCustomer(customer, '9003706368')
 console.log(updatedCustomer)
 console.log("Same Object (state===newState) ? =>", customer === updatedCustomer);
+............................................................................................
+				Immer and React
+
+
+//React and immer
+// import produce from 'immer';
+import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
+import { useImmer } from 'use-immer';
+
+//TodoList
+const TodoList = props => {
+    const initalState = [{
+        id: 1,
+        title: 'Learn React',
+        done: false
+    },
+    {
+        id: 2,
+        title: 'Learn React With Immer',
+        done: false
+    }
+    ];
+    // const [todos, setTodos] = useState(initalState)
+    const [todos, setTodos] = useImmer(initalState)
+
+    //add new Todo
+    const handleAddTodo = evt => {
+        setTodos(state => {
+            state.push({
+                id: "todo_" + Math.random(),
+                title: 'A new Todo',
+                done: false
+            })
+        });
+    }
+
+    //toggling with immer
+    const toggleTodo = id => {
+        setTodos(state => {
+            const todo = state.find(todo => todo.id === id)
+            todo.done = !todo.done;
+        })
+    }
+
+
+
+    return <div>
+        <h1>Todo App Using Immer</h1>
+        <button onClick={handleAddTodo}>Add Todo</button>
+        <ul>
+            {
+                todos.map((todo, index) => {
+                    return <Todo todo={todo} onToggle={toggleTodo} key={todo.id} />;
+                })
+            }
+
+        </ul>
+        <h1>Tasks Left : {todos.filter(todo => { return todo.done === false }).length}</h1>
+    </div>
+};
+const Todo = ({ todo, onToggle }) => {
+    console.log(todo)
+    return <li>
+        <input type="checkbox" onClick={() => {
+            onToggle(todo.id)
+        }} />
+        {todo.title}
+    </li>
+}
+
+
+
+const App = () => {
+    return <TodoList />
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................
+<					Redux
+...............................................................................................
+
+React is UI lib having 
+
+-UI -View
+-Data - state,props
+
+
+React === UI + DATA
+
+DATA manipulation as of now we have seen inside react itself.
+
+As app grows, the data management will be very diffcult.
+We need isloate the data and its manipulation , separate layer is needed - State management Layer.
+
+Redux is lib which manages the application state where react is going to act as View Layer.
+
+
+View-------------------->|State Layer-----|
+|				|
+|<------------------------------
+
+What is Redux?
+
+ Redux is javascript lib , for  Managing state of Javascript Application.
+
+
+Features of Redux:
+
+1.Predicatable
+2.Centeralized
+3.Debuggable
+4.Flexible
+
+.............................................................................................
+					Redux Core Concepts
+
+Redux is looks like state machine.  Flow of application always goes from one state to another state.
+
+Redux is pattern and lib for managing and updating application state using "events" called "actions"
+
+When should i use Redux?
+
+->if application has large amounts of state(data) , that are needed in many places in the app.
+->The app state is updated frequently over period of time.
+->The update logic is very complex.
+->If app is developed by many developer.
+
+
+Redux tools:
+
+1.redux.js
+  simple standalone javascript lib. redux core.
+
+2.react-redux
+  it is binding lib for connecting redux with react.
+
+3.redux toolkit
+   It is wrapper lib for old redux
+
+4.Redux dev tool
+  To inspect history of app state changes- time travel debugging.
+
+
+State Management:
+.................
+
+if you look at the simple component
+import { useState } from "react"
+
+const Counter = props => {
+    //state: a counter
+    const [counter, setCounter] = useState(0)
+
+    //Action: code that causes an update to the state when something happens(cick button)
+    const increment = evt => {
+        setCounter(counter + 1);
+    }
+
+    //view: UI Definition
+    return <div>
+        Value : {counter} <button onClick={increment}>+</button>
+    </div>
+}
+
+This app contains
+
+1.state - Source of truth that drives application.
+2.The view - The declarative description of the UI based on current state
+3.The actions -The events that occur in the app based on user input,and trigger updates in the state.
+
+
+What if the counter state is needed by multiple components in the app?
+
+Solution:
+
+ -Lifiting up the state from child component to top most the parent , from where you can pass data as prop to child components
+
+- Extract the shared data(state) from the components and put it into a centeralized location
+ outside the component tree.
+
+ -Based on this idea, The compoment becomes view
+
+The idea behind redux is : "A Single Centeralized place to contain globall state for applications"
+
+We need some pattern to update the state 
+
+Patterns:
+
+1.immmutablity
+  - immutablity pattern helps to avoid state corruption when many components tries to update.
+
+2.Actions
+  Action is  request for redux to change the state 
+  Action is a plain javascript object( {}) that has a type field.
+  {type:''}
+  You can think of an action as an event that describes something that happened in the   application.
+ 
+syntax:
+
+  const actionName= { 
+    type:'domainname/eventname'    
+  } 
+
+  const increment= { 
+    type:'stock/increment'    
+  } 
+
+with payload : input
+
+  const increment= { 
+    type:'stock/increment',
+    payload: 'new Product'   
+  }
+
+2.2.Action Creators
+  Actions are requests.
+ Where as action creators are request creators -  function which returns action
+
+ function incrementStock(payload){
+    return { 
+    type:'stock/increment',
+    payload: payload   
+  }
+ }
+
+incrementStock('new Product');
+ 
+
+3.Reducers
+
+->A reducer function , that receives the request and process the request and returns response
+  -having biz logic
+->A reducer is pure function, should return always immutable datastructure(state)
+->You can think of reducer is like event listener which handles events based on event(action) type.
+
+Reducer has some basic rules
+
+1. reducer must take two args
+   -first arg initalstate, second arg is action(event => name of the event + payload).
+
+   function stockReducer(state=initState,action){
+   
+    
+   }
+2.reducer function must have body for event filtering and should return new state based on immutable logic
+
+
+   function stockReducer(state=initState,action){
+      switch(action.type){
+	case 'stock/increment':
+		return {...} //immutable ds
+	default
+	   return state;
+     }
+    
+   }
+
+3.store
+ Where the current redux application lives in an object called store.
+
+ Store is simple javascript object.
+
+Store contains two things
+
+-storage for application state - {}
+
+-apis for sending request,processing biz logic,sending response.....
+
+
+Store apis:
+
+1.Dispatch - store.dispatch()
+
+The only way to update the state is to call store.dispatch method by passing action object as parameter.
+
+ store.dispatch(action)----------->store
+
+As soon as the store receives the request, it will run/call/invoke the reducer function
+
+ store.dispatch(action)----------->store----run the reducer function
+
+As soon as the reducer gets called, it verifies the type of action it has come, computes the new state.
+
+ store.dispatch(action)----------->store----run the reducer function---return new State
+
+The reducer returns new state to the Store only--the previous state will be updated with new modified data.
+
+
+ store.dispatch(action)----------->store----run the reducer function---return new State --store.
+
+The store as soon recieves new state, it will run a listener "subcribe", where you can collect all the new state.
+
+From the listener, state can be given to UI-View
+
+ store.dispatch(action)----------->store----run the reducer function---return new State --store----subscribe-------VIEW.
+
+
+4.Selectors
+
+   Selector is function that know how to extract specific pieces of information from a store state value.
+
+ const value = select(store.getState())
+
+
+...
+
+store.subscribe(callback)
+   response listener
+
+
+store.getState()
+   To read the entire app state.
+............................................................................................s
+				  Redux Setup
+
+
+npm install redux react-redux  
+
+
+import { createStore } from "redux";
+
+//reducer
+const initalState = {
+    value: 0
+}
+const counterReducer = (state = initalState, action) => {
+    //logic
+    switch (action.type) {
+        case 'counter/increment':
+            console.log("Old state", state, "action", action)
+            return { ...state, value: state.value + 1 };
+        default:
+            return state;
+    }
+}
+const store = createStore(counterReducer);
+
+//response listener
+store.subscribe(() => console.log("Current State", store.getState()))
+
+//action 
+const increment = {
+    type: 'counter/increment',
+    payload: undefined
+}
+
+//dispatch action : send request.
+
+store.dispatch(increment)
+store.dispatch({
+    type: 'counter/increment',
+    payload: undefined
+})
+for (let i = 0; i < 10; i++) {
+    store.dispatch({
+        type: 'counter/increment',
+        payload: undefined
+    })
+}
+
+..........................................................................................
+				Action Creator
+
+import { createStore } from "redux";
+
+//reducer
+const initalState = {
+    value: 0
+}
+const counterReducer = (state = initalState, action) => {
+    //logic
+    switch (action.type) {
+        case 'counter/increment':
+            console.log("Old state", state, "action", action)
+            return { ...state, value: state.value + 1 };
+        default:
+            return state;
+    }
+}
+const store = createStore(counterReducer);
+
+//response listener
+store.subscribe(() => console.log("Current State", store.getState()))
+
+//action creator
+// function increment() {
+//     return {
+//         type: 'counter/increment',
+//         payload: undefined
+//     }
+// }
+
+const increment = () => ({
+    type: 'counter/increment',
+    payload: undefined
+});
+store.dispatch(increment());
+..............................................................................................
+				How to pass parameter to the action-payload
+
+import { createStore } from "redux";
+
+//reducer
+const initalState = {
+    value: 0
+}
+const counterReducer = (state = initalState, action) => {
+    //logic
+    switch (action.type) {
+        case 'counter/increment':
+            console.log("Old state", state, "action", action)
+            return { ...state, value: state.value + 1 };
+        case 'counter/incrementByAmount':
+            console.log("Old state", state, "action", action)
+            return { ...state, value: state.value + action.payload };
+        default:
+            return state;
+    }
+}
+const store = createStore(counterReducer);
+
+//response listener
+store.subscribe(() => console.log("Current State", store.getState()))
+
+const increment = () => ({
+    type: 'counter/increment',
+    payload: undefined
+});
+
+//action creator
+store.dispatch(increment());
+
+//payload
+// const incrementByAmount = payload => ({
+//     type: 'counter/incrementByAmount',
+//     payload: payload
+// })
+
+const incrementByAmount = payload => ({
+    type: 'counter/incrementByAmount',
+    payload //destructured syntax
+})
+
+for (let i = 0; i < 10; i++) {
+    store.dispatch(incrementByAmount(i))
+}
+..............................................................................................
+			Code Refactoring - Reducer Logic-Using Immer
+
+import produce from "immer";
+import { createStore } from "redux";
+
+//reducer
+const initalState = {
+    value: 0
+}
+const counterReducer = (state = initalState, action) => {
+    //logic
+    switch (action.type) {
+        case 'counter/increment':
+            console.log("Old state", state, "action", action)
+            // return { ...state, value: state.value + 1 };
+            return produce(state, draft => {
+                draft.value++;
+            });
+        case 'counter/incrementByAmount':
+            console.log("Old state", state, "action", action)
+            //return { ...state, value: state.value + action.payload };
+            return produce(state, draft => {
+                draft.value += action.payload;
+            });
+        default:
+            return state;
+    }
+}
+const store = createStore(counterReducer);
+
+//response listener
+store.subscribe(() => console.log("Current State", store.getState()))
+
+const increment = () => ({
+    type: 'counter/increment',
+    payload: undefined
+});
+
+//action creator
+store.dispatch(increment());
+store.dispatch(increment());
+store.dispatch(increment());
+
+const incrementByAmount = payload => ({
+    type: 'counter/incrementByAmount',
+    payload //destructured syntax
+})
+store.dispatch(incrementByAmount(10));
+
+.............................................................................................
+					Mutiple Reducers
+.............................................................................................
+import produce from "immer";
+import { createStore, combineReducers } from "redux";
+
+// multiple reducers
+const initalState = {
+    value: 0
+}
+const counterReducer = (state = initalState, action) => {
+    //logic
+    switch (action.type) {
+        case 'counter/increment':
+            console.log("Old state", state, "action", action)
+            // return { ...state, value: state.value + 1 };
+            return produce(state, draft => {
+                draft.value++;
+            });
+        case 'counter/incrementByAmount':
+            console.log("Old state", state, "action", action)
+            //return { ...state, value: state.value + action.payload };
+            return produce(state, draft => {
+                draft.value += action.payload;
+            });
+        default:
+            return state;
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////
+//Profile Reducer
+const initalProfileState = {
+    id: 1,
+    name: 'Subramanian',
+    contact: {
+        address: {
+            city: 'Coimbatore'
+        },
+        communication: {
+            mobileno: '9000000000'
+        }
+    }
+};
+const profileReducer = (state = initalProfileState, action) => {
+    switch (action.type) {
+        case 'profile/updateContact':
+            return produce(state, draft => {
+                draft.contact.communication.mobileno = action.payload;
+            });
+        default:
+            return state;
+    }
+};
+
+//store can take only one reducer as parameter, what if i have many reducers.
+
+const rootReducer = combineReducers({
+    counter: counterReducer,
+    profile: profileReducer
+})
+
+const store = createStore(rootReducer);
+/**
+ * const appState = {
+ *  counter: {
+ * 
+ *  },
+ *  profile: {
+ * 
+ *  }
+ * }
+ */
+//response listener
+store.subscribe(() => console.log("Current State", store.getState()))
+
+const increment = () => ({
+    type: 'counter/increment',
+    payload: undefined
+});
+
+//action creator
+store.dispatch(increment());
+store.dispatch(increment());
+store.dispatch(increment());
+
+const incrementByAmount = payload => ({
+    type: 'counter/incrementByAmount',
+    payload //destructured syntax
+})
+store.dispatch(incrementByAmount(10));
+
+//update Profile reducer
+const updateContact = payload => ({
+    type: 'profile/updateContact',
+    payload
+});
+store.dispatch(updateContact('9003706368'))
+..............................................................................................
+				React -Redux Integration
+import produce from "immer";
+import { createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { connect, Provider } from 'react-redux'
+
+//reducer
+const initalState = {
+    value: 10
+}
+const counterReducer = (state = initalState, action) => {
+    //logic
+    switch (action.type) {
+        case 'counter/increment':
+            console.log("Old state", state, "action", action)
+            // return { ...state, value: state.value + 1 };
+            return produce(state, draft => {
+                draft.value++;
+            });
+        case 'counter/incrementByAmount':
+            console.log("Old state", state, "action", action)
+            //return { ...state, value: state.value + action.payload };
+            return produce(state, draft => {
+                draft.value += action.payload;
+            });
+        default:
+            return state;
+    }
+}
+const store = createStore(counterReducer);
+/////////////////////////////////////////////////////////////////////////////////////
+//mapper function/selector
+//state->app state
+function mapStateToProps(state) {
+    return {
+        myvalue: state.value
+        //react prop:reduxstate
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////
+
+//action creator
+const increment = () => ({
+    type: 'counter/increment',
+    payload: undefined
+});
+
+//container component
+
+const Counter = props => {
+    //console.log(props)
+    const { dispatch } = props;
+    const onIncrement = evt => {
+        //  props.dispatch(increment())
+        dispatch(increment());
+    }
+    return <CounterDashBoard {...props} onIncrement={onIncrement} />
+};
+//presentational components
+const CounterDashBoard = ({ myvalue, onIncrement }) => <>
+    <h1>Value: {myvalue}</h1>
+    <button onClick={onIncrement}>increment</button>
+</>
+
+
+//merge the View + Redux
+const CounterHOC = connect(mapStateToProps)(Counter)
+
+const App = () => <div>
+    <h1>React - Redux Integration</h1>
+    <Provider store={store}>
+        <CounterHOC />
+    </Provider>
+</div>
+
+ReactDOM.render(<App />, document.getElementById('root'));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
 
 
 
