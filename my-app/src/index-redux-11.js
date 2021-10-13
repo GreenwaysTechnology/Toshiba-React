@@ -4,7 +4,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { configureStore, createAction, createReducer, createSlice } from "@reduxjs/toolkit";
-import logger from 'redux-logger'
 
 //redux
 const state = {
@@ -82,7 +81,7 @@ const rootReducer = combineReducers({
 
 //create store
 //const store = createStore(rootReducer);
-const store = configureStore({ reducer: rootReducer, middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger) })
+const store = configureStore({ reducer: rootReducer })
 
 const Counter = props => {
 

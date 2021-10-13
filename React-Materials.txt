@@ -4457,54 +4457,942 @@ const App = () => <div>
 </div>
 
 ReactDOM.render(<App />, document.getElementById('root'));
+.............................................................................................
+			How to remove-mapStateProps,connect,HOC
+
+
+import produce from "immer";
+import { combineReducers, createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider, useSelector, useDispatch } from "react-redux";
+
+//redux
+const initalState = {
+    value: 10
+}
+const incrementReducer = (state = initalState, action) => {
+    switch (action.type) {
+        case 'counter/increment':
+            return produce(state, draft => {
+                draft.value++;
+            });
+        case 'counter/incrementByAmount':
+            return produce(state, draft => {
+                draft.value += action.payload;
+            })
+        default:
+            return state;
+    }
+}
+
+
+//create store
+const store = createStore(incrementReducer);
+const Counter = props => {
+    // const value = useSelector(state => {
+    //     return state.value
+    // });
+    // const value = useSelector(state => state.value);
+    const value = useSelector(state => state.value);
+
+    // const dispatch = useDispatch();
+    const onIncrement = useDispatch();
+
+    //action creator
+    const increment = () => ({
+        type: 'counter/increment',
+        payload: undefined
+    });
+    // const onIncrement = evt => {
+    //     dispatch(increment());
+    // };
+    return <>
+        <h1>Counter Increment Value : {value} </h1>
+        {/* <button onClick={onIncrement}>Increment</button> */}
+        <button onClick={() => {
+            onIncrement(increment())
+        }}>Increment</button>
+
+    </>
+}
+
+const App = props => {
+    return <div>
+        <Provider store={store}>
+            <Counter />
+        </Provider>
+    </div>
+};
+ReactDOM.render(<App />, document.getElementById('root'));
+............................................................................................
+			Multiple Reducers- useSelector and useDispatch
+............................................................................................
+
+import produce from "immer";
+import { combineReducers, createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider, useSelector, useDispatch } from "react-redux";
+
+//redux
+const initalState = {
+    value: 10
+}
+
+
+
+const decrementReducer = (state = {
+    value: 100
+}, action) => {
+    switch (action.type) {
+        case 'counter/decrement':
+            return produce(state, draft => {
+                draft.value--;
+            });
+        default:
+            return state;
+    }
+}
+
+const rootReducer = combineReducers({
+    increment: incrementReducer,
+    decrement: decrementReducer
+})
+
+//create store
+const store = createStore(rootReducer);
+
+const Counter = props => {
+
+    //should selected state based on reducer
+    // const value = useSelector(state => state.reducer.reducerstatevariable);
+    const incrementValue = useSelector(state => state.increment.value);
+    const decrementValue = useSelector(state => state.decrement.value);
+
+    const onIncrement = useDispatch();
+    const onDecrement = useDispatch();
+
+    //action creators
+    const increment = () => ({
+        type: 'counter/increment',
+        payload: undefined
+    });
+    const decrement = () => ({
+        type: 'counter/decrement',
+        payload: undefined
+    });
+
+    return <>
+        <h1>Counter Increment Value : {incrementValue}  Counter Decrement Value {decrementValue}</h1>
+        {/* <button onClick={onIncrement}>Increment</button> */}
+        <button onClick={() => {
+            onIncrement(increment())
+        }}>Increment</button>
+      <button onClick={() => {
+            onDecrement(decrement())
+        }}>Decrement</button>
+    </>
+}
+
+const App = props => {
+    return <div>
+        <Provider store={store}>
+            <Counter />
+        </Provider>
+    </div>
+};
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................
+			  Abstraction on Store,Reducer.....
+			     Redux tool kit - RTK
+.............................................................................................
+
+What is RTK?
+
+The official, opinionated, batteries-included toolset for efficient Redux development
+
+
+Why RTK?
+=>Configuring store is too complicated
+=>I have to add lot of packages to do anything usefull.
+=>Redux requires too much boiler plate
+
+
+How to start RTK?
+
+First Time Create react project
+
+create-react-app my-app --template redux ---->which will install all rtk 
+
+
+for old react projects
+
+npm install @reduxjs/toolkit
+
+
+APIs:
+....
+
+1.store related api
+
+createStore ;
+ 
+ -it is complicated when to setup reducers,middlewares,devtool integration.
+Here we have to manually.
+
+configureStore() - RTK api
+
+=>to provide simplified configuration with default settings.
+
+type ConfigureEnhancersCallback = (
+  defaultEnhancers: StoreEnhancer[]
+) => StoreEnhancer[]
+
+interface ConfigureStoreOptions<
+  S = any,
+  A extends Action = AnyAction,
+  M extends Middlewares<S> = Middlewares<S>
+> {
+  /**
+   * A single reducer function that will be used as the root reducer, or an
+   * object of slice reducers that will be passed to `combineReducers()`.
+   */
+  reducer: Reducer<S, A> | ReducersMapObject<S, A>
+
+  /**
+   * An array of Redux middleware to install. If not supplied, defaults to
+   * the set of middleware returned by `getDefaultMiddleware()`.
+   */
+  middleware?: ((getDefaultMiddleware: CurriedGetDefaultMiddleware<S>) => M) | M
+
+  /**
+   * Whether to enable Redux DevTools integration. Defaults to `true`.
+   *
+   * Additional configuration can be done by passing Redux DevTools options
+   */
+  devTools?: boolean | DevToolsOptions
+
+  /**
+   * The initial state, same as Redux's createStore.
+   * You may optionally specify it to hydrate the state
+   * from the server in universal apps, or to restore a previously serialized
+   * user session. If you use `combineReducers()` to produce the root reducer
+   * function (either directly or indirectly by passing an object as `reducer`),
+   * this must be an object with the same shape as the reducer map keys.
+   */
+  preloadedState?: DeepPartial<S extends any ? S : S>
+
+  /**
+   * The store enhancers to apply. See Redux's `createStore()`.
+   * All enhancers will be included before the DevTools Extension enhancer.
+   * If you need to customize the order of enhancers, supply a callback
+   * function that will receive the original array (ie, `[applyMiddleware]`),
+   * and should return a new array (such as `[applyMiddleware, offline]`).
+   * If you only need to add middleware, you can use the `middleware` parameter instead.
+   */
+  enhancers?: StoreEnhancer[] | ConfigureEnhancersCallback
+}
+
+function configureStore<S = any, A extends Action = AnyAction>(
+  options: ConfigureStoreOptions<S, A>
+): EnhancedStore<S, A>
+.............................................................................................
+
+configureStore
+
+import produce from "immer";
+import { combineReducers, createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider, useSelector, useDispatch } from "react-redux";
+import { configureStore } from "@reduxjs/toolkit";
+
+//redux
+const initalState = {
+    value: 10
+}
+const incrementReducer = (state = initalState, action) => {
+    switch (action.type) {
+        case 'counter/increment':
+            return produce(state, draft => {
+                draft.value++;
+            });
+        case 'counter/incrementByAmount':
+            return produce(state, draft => {
+                draft.value += action.payload;
+            })
+        default:
+            return state;
+    }
+}
+const decrementReducer = (state = {
+    value: 100
+}, action) => {
+    switch (action.type) {
+        case 'counter/decrement':
+            return produce(state, draft => {
+                draft.value--;
+            });
+        default:
+            return state;
+    }
+}
+
+const rootReducer = combineReducers({
+    increment: incrementReducer,
+    decrement: decrementReducer
+})
+
+//create store
+//const store = createStore(rootReducer);
+const store = configureStore({ reducer: rootReducer })
+
+const Counter = props => {
+
+    //should selected state based on reducer
+    // const value = useSelector(state => state.reducer.reducerstatevariable);
+    const incrementValue = useSelector(state => state.increment.value);
+    const decrementValue = useSelector(state => state.decrement.value);
+
+    const onIncrement = useDispatch();
+    const onDecrement = useDispatch();
+
+    //action creators
+    const increment = () => ({
+        type: 'counter/increment',
+        payload: undefined
+    });
+    const decrement = () => ({
+        type: 'counter/decrement',
+        payload: undefined
+    });
+
+    return <>
+        <h1>Counter Increment Value : {incrementValue}  Counter Decrement Value {decrementValue}</h1>
+        {/* <button onClick={onIncrement}>Increment</button> */}
+        <button onClick={() => {
+            onIncrement(increment())
+        }}>Increment</button>
+        <button onClick={() => {
+            onDecrement(decrement())
+        }}>Decrement</button>
+    </>
+}
+
+const App = props => {
+    return <div>
+        <Provider store={store}>
+            <Counter />
+        </Provider>
+    </div>
+};
+ReactDOM.render(<App />, document.getElementById('root'));
+..............................................................................................				Reducers and Redux Tool Kit
+..............................................................................................
+
+RTK provides method to create Reducers.
+
+createReducer();
+
+
+It is utility function reduces lot of boiler plate code.
+
+=>It uses immer internally, so we dont need to write immutablity code manually.
+=>builder and map patterns are used to eleminate hardcode switch...case ,and actions
+
+
+createReducer with builder pattern
+...................................
+import produce from "immer";
+import { combineReducers, createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider, useSelector, useDispatch } from "react-redux";
+import { configureStore, createReducer } from "@reduxjs/toolkit";
+
+//redux
+const initalState = {
+    value: 10
+}
+// const incrementReducer = (state = initalState, action) => {
+//     switch (action.type) {
+//         case 'counter/increment':
+//             return produce(state, draft => {
+//                 draft.value++;
+//             });
+//         case 'counter/incrementByAmount':
+//             return produce(state, draft => {
+//                 draft.value += action.payload;
+//             })
+//         default:
+//             return state;
+//     }
+// }
+
+// const decrementReducer = (state = {
+//     value: 100
+// }, action) => {
+//     switch (action.type) {
+//         case 'counter/decrement':
+//             return produce(state, draft => {
+//                 draft.value--;
+//             });
+//         default:
+//             return state;
+//     }
+// }
+
+//create reducer using createReducer function
+
+//here builder is variable holding Builder Object which has switch...case methods
+const incrementReducer = createReducer(initalState, builder => {
+    builder
+        .addCase('counter/increment', (state, action) => {
+            state.value++;
+        })
+        .addDefaultCase((state, action) => { })
+});
+
+const decrementReducer = createReducer(initalState, builder => {
+    builder
+        .addCase('counter/decrement', (state, action) => {
+            state.value--;
+        })
+        .addDefaultCase((state, action) => { })
+});
+
+
+
+
+const rootReducer = combineReducers({
+    increment: incrementReducer,
+    decrement: decrementReducer
+})
+
+//create store
+//const store = createStore(rootReducer);
+const store = configureStore({ reducer: rootReducer })
+
+const Counter = props => {
+
+    //should selected state based on reducer
+    // const value = useSelector(state => state.reducer.reducerstatevariable);
+    const incrementValue = useSelector(state => state.increment.value);
+    const decrementValue = useSelector(state => state.decrement.value);
+
+    const onIncrement = useDispatch();
+    const onDecrement = useDispatch();
+
+    //action creators
+    const increment = () => ({
+        type: 'counter/increment',
+        payload: undefined
+    });
+    const decrement = () => ({
+        type: 'counter/decrement',
+        payload: undefined
+    });
+
+    return <>
+        <h1>Counter Increment Value : {incrementValue}  Counter Decrement Value {decrementValue}</h1>
+        {/* <button onClick={onIncrement}>Increment</button> */}
+        <button onClick={() => {
+            onIncrement(increment())
+        }}>Increment</button>
+        <button onClick={() => {
+            onDecrement(decrement())
+        }}>Decrement</button>
+    </>
+}
+
+const App = props => {
+    return <div>
+        <Provider store={store}>
+            <Counter />
+        </Provider>
+    </div>
+};
+ReactDOM.render(<App />, document.getElementById('root'));
+
+..............................................................................................
+			Map Object Notation Pattern
+..............................................................................................
+import produce from "immer";
+import { combineReducers, createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider, useSelector, useDispatch } from "react-redux";
+import { configureStore, createReducer } from "@reduxjs/toolkit";
+
+//redux
+const initalState = {
+    value: 10
+}
+
+//here builder is variable holding Builder Object which has switch...case methods
+// const incrementReducer = createReducer(initalState, builder => {
+//     builder
+//         .addCase('counter/increment', (state, action) => {
+//             state.value++;
+//         })
+//         .addDefaultCase((state, action) => { })
+// });
+
+// const decrementReducer = createReducer(initalState, builder => {
+//     builder
+//         .addCase('counter/decrement', (state, action) => {
+//             state.value--;
+//         })
+//         .addDefaultCase((state, action) => { })
+// });
+//Map Object Notation:
+const incrementReducer = createReducer(initalState, {
+    'counter/increment': (state, action) => {
+        state.value++;
+    }
+});
+const decrementReducer = createReducer(initalState, {
+    'counter/decrement': (state, action) => {
+        state.value--;
+    }
+})
 
 
 
 
 
+const rootReducer = combineReducers({
+    increment: incrementReducer,
+    decrement: decrementReducer
+})
 
+//create store
+//const store = createStore(rootReducer);
+const store = configureStore({ reducer: rootReducer })
 
+const Counter = props => {
 
+    //should selected state based on reducer
+    // const value = useSelector(state => state.reducer.reducerstatevariable);
+    const incrementValue = useSelector(state => state.increment.value);
+    const decrementValue = useSelector(state => state.decrement.value);
 
+    const onIncrement = useDispatch();
+    const onDecrement = useDispatch();
 
+    //action creators
+    const increment = () => ({
+        type: 'counter/increment',
+        payload: undefined
+    });
+    const decrement = () => ({
+        type: 'counter/decrement',
+        payload: undefined
+    });
 
+    return <>
+        <h1>Counter Increment Value : {incrementValue}  Counter Decrement Value {decrementValue}</h1>
+        {/* <button onClick={onIncrement}>Increment</button> */}
+        <button onClick={() => {
+            onIncrement(increment())
+        }}>Increment</button>
+        <button onClick={() => {
+            onDecrement(decrement())
+        }}>Decrement</button>
+    </>
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+const App = props => {
+    return <div>
+        <Provider store={store}>
+            <Counter />
+        </Provider>
+    </div>
+};
+ReactDOM.render(<App />, document.getElementById('root'));
+.............................................................................................
+				Actions -createAction
+.............................................................................................
   
 
+const INCREMENT = 'counter/increment'
+
+function increment(amount) {
+  return {
+    type: INCREMENT,
+    payload: amount,
+  }
+}
+
+const action = increment(3)
+// { type: 'counter/increment', payload: 3 }
+
+..............................................................................
+import { createAction } from '@reduxjs/toolkit'
+
+const increment = createAction('counter/increment')
+
+let action = increment()
+// { type: 'counter/increment' }
+
+action = increment(3)
+// returns { type: 'counter/increment', payload: 3 }
+
+console.log(increment.toString())
+// 'counter/increment'
+
+console.log(`The action type is: ${increment}`)
+// 'The action type is: counter/increment'
 
 
+..........................................................................................
+import produce from "immer";
+import { combineReducers, createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider, useSelector, useDispatch } from "react-redux";
+import { configureStore, createAction, createReducer } from "@reduxjs/toolkit";
+
+//redux
+const initalState = {
+    value: 10
+}
+
+const increment = createAction('counter/increment');
+const decrement = createAction('counter/decrement');
+
+// console.log(increment())
+
+//here builder is variable holding Builder Object which has switch...case methods
+// const incrementReducer = createReducer(initalState, builder => {
+//     builder
+//         .addCase(increment, (state, action) => {
+//             state.value++;
+//         })
+//         .addDefaultCase((state, action) => { })
+// });
+
+// const decrementReducer = createReducer(initalState, builder => {
+//     builder
+//         .addCase(decrement, (state, action) => {
+//             state.value--;
+//         })
+//         .addDefaultCase((state, action) => { })
+// });
+//Map Object Notation:
+const incrementReducer = createReducer(initalState, {
+    [increment]: (state, action) => {
+        state.value++;
+    }
+});
+const decrementReducer = createReducer(initalState, {
+    [decrement]: (state, action) => {
+        state.value--;
+    }
+})
+
+const rootReducer = combineReducers({
+    increment: incrementReducer,
+    decrement: decrementReducer
+})
+
+//create store
+//const store = createStore(rootReducer);
+const store = configureStore({ reducer: rootReducer })
+
+const Counter = props => {
+
+    const incrementValue = useSelector(state => state.increment.value);
+    const decrementValue = useSelector(state => state.decrement.value);
+
+    const onIncrement = useDispatch();
+    const onDecrement = useDispatch();
+
+    return <>
+        <h1>Counter Increment Value : {incrementValue}  Counter Decrement Value {decrementValue}</h1>
+        <button onClick={() => {
+            onIncrement(increment())
+        }}>Increment</button>
+        <button onClick={() => {
+            onDecrement(decrement())
+        }}>Decrement</button>
+    </>
+}
+
+const App = props => {
+    return <div>
+        <Provider store={store}>
+            <Counter />
+        </Provider>
+    </div>
+};
+ReactDOM.render(<App />, document.getElementById('root'));
+
+.............................................................................................
+..............................................................................................
+				  createSlice
+			actions,reducers we dont need to create- automatation.
+
+Internally, it uses createAction and createReducer, so you may also use Immer to write "mutating" immutable updates.
+
+import produce from "immer";
+import { combineReducers, createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider, useSelector, useDispatch } from "react-redux";
+import { configureStore, createAction, createReducer, createSlice } from "@reduxjs/toolkit";
+
+//redux
+const state = {
+    value: 10
+}
+
+// const increment = createAction('counter/increment');
+// const decrement = createAction('counter/decrement');
+
+// console.log(increment())
+
+//here builder is variable holding Builder Object which has switch...case methods
+// const incrementReducer = createReducer(initalState, builder => {
+//     builder
+//         .addCase(increment, (state, action) => {
+//             state.value++;
+//         })
+//         .addDefaultCase((state, action) => { })
+// });
+
+// const decrementReducer = createReducer(initalState, builder => {
+//     builder
+//         .addCase(decrement, (state, action) => {
+//             state.value--;
+//         })
+//         .addDefaultCase((state, action) => { })
+// });
+//Map Object Notation:
+// const incrementReducer = createReducer(initalState, {
+//     [increment]: (state, action) => {
+//         state.value++;
+//     }
+// });
+// const decrementReducer = createReducer(initalState, {
+//     [decrement]: (state, action) => {
+//         state.value--;
+//     }
+// })
+
+const incrementSlice = createSlice({
+    name: 'counterinc',
+    initialState: state,
+    reducers: {
+        increment(state, action) {
+            state.value++;
+        }
+    }
+});
+
+const decrementSlice = createSlice({
+    name: 'counterdec',
+    initialState: state,
+    reducers: {
+        decrement(state, action) {
+            state.value--;
+        }
+    }
+});
+
+// console.log(incrementSlice)
+const { increment } = incrementSlice.actions;
+const { decrement } = decrementSlice.actions;
+//reducers
+// const incrementred = incrementSlice.reducer
+// console.log(incrementred
+
+// console.log(actions)
+// console.log(increment())
 
 
+const rootReducer = combineReducers({
+    increment: incrementSlice.reducer,
+    decrement: decrementSlice.reducer
+})
+
+//create store
+//const store = createStore(rootReducer);
+const store = configureStore({ reducer: rootReducer })
+
+const Counter = props => {
+
+    const incrementValue = useSelector(state => state.increment.value);
+    const decrementValue = useSelector(state => state.decrement.value);
+
+    const onIncrement = useDispatch();
+    const onDecrement = useDispatch();
+
+    return <>
+        <h1>Counter Increment Value : {incrementValue}  Counter Decrement Value {decrementValue}</h1>
+        <button onClick={() => {
+            onIncrement(increment())
+        }}>Increment</button>
+        <button onClick={() => {
+            onDecrement(decrement())
+        }}>Decrement</button>
+    </>
+}
+
+const App = props => {
+    return <div>
+        <Provider store={store}>
+            <Counter />
+        </Provider>
+    </div>
+};
+ReactDOM.render(<App />, document.getElementById('root'));
+.............................................................................................
+				Middlewares
+..............................................................................................
+
+Cross cutting concern.
+
+eg:
+logging
+
+configureStore
+ has default middlewares already
+=>Immutability check middleware
+=>Serializability check middleware
+=>Thunk
+
++
+Your middlewars
+
+To add middleware 
+
+const middleware = [thunk, immutableStateInvariant, serializableStateInvariant]
+
+configureStore({
+ reducer: root,
+ middleware:middleware
+})
+
+Way 2 to add middleware
+
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+})
+
+import produce from "immer";
+import { combineReducers, createStore } from "redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider, useSelector, useDispatch } from "react-redux";
+import { configureStore, createAction, createReducer, createSlice } from "@reduxjs/toolkit";
+import logger from 'redux-logger'
+
+//redux
+const state = {
+    value: 10
+}
+
+// const increment = createAction('counter/increment');
+// const decrement = createAction('counter/decrement');
+
+// console.log(increment())
+
+//here builder is variable holding Builder Object which has switch...case methods
+// const incrementReducer = createReducer(initalState, builder => {
+//     builder
+//         .addCase(increment, (state, action) => {
+//             state.value++;
+//         })
+//         .addDefaultCase((state, action) => { })
+// });
+
+// const decrementReducer = createReducer(initalState, builder => {
+//     builder
+//         .addCase(decrement, (state, action) => {
+//             state.value--;
+//         })
+//         .addDefaultCase((state, action) => { })
+// });
+//Map Object Notation:
+// const incrementReducer = createReducer(initalState, {
+//     [increment]: (state, action) => {
+//         state.value++;
+//     }
+// });
+// const decrementReducer = createReducer(initalState, {
+//     [decrement]: (state, action) => {
+//         state.value--;
+//     }
+// })
+
+const incrementSlice = createSlice({
+    name: 'counterinc',
+    initialState: state,
+    reducers: {
+        increment(state, action) {
+            state.value++;
+        }
+    }
+});
+
+const decrementSlice = createSlice({
+    name: 'counterdec',
+    initialState: state,
+    reducers: {
+        decrement(state, action) {
+            state.value--;
+        }
+    }
+});
+
+// console.log(incrementSlice)
+const { increment } = incrementSlice.actions;
+const { decrement } = decrementSlice.actions;
+//reducers
+// const incrementred = incrementSlice.reducer
+// console.log(incrementred
+
+// console.log(actions)
+// console.log(increment())
 
 
+const rootReducer = combineReducers({
+    increment: incrementSlice.reducer,
+    decrement: decrementSlice.reducer
+})
 
+//create store
+//const store = createStore(rootReducer);
+const store = configureStore({ reducer: rootReducer, middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger) })
 
+const Counter = props => {
 
+    const incrementValue = useSelector(state => state.increment.value);
+    const decrementValue = useSelector(state => state.decrement.value);
 
+    const onIncrement = useDispatch();
+    const onDecrement = useDispatch();
+
+    return <>
+        <h1>Counter Increment Value : {incrementValue}  Counter Decrement Value {decrementValue}</h1>
+        <button onClick={() => {
+            onIncrement(increment())
+        }}>Increment</button>
+        <button onClick={() => {
+            onDecrement(decrement())
+        }}>Decrement</button>
+    </>
+}
+
+const App = props => {
+    return <div>
+        <Provider store={store}>
+            <Counter />
+        </Provider>
+    </div>
+};
+ReactDOM.render(<App />, document.getElementById('root'));
 
